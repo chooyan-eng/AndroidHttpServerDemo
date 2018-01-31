@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Chooyan HTTP server</title>
+
+    <style type="text/css">
+        * {
+            padding: 0;
+            margin: 0;
+        }
+        #header {
+            background-color: #388E3C;
+            color: #ffffff;
+            padding: 32px;
+        }
+        #contents {
+            padding: 32px;
+        }
+        .margintop {
+            margin-top: 16px;
+        }
+        .message {
+            border: solid 1px #388E3C;
+            padding: 16px;
+        }
+        table {
+            border: solid 1px #388E3C;
+        }
+        table tr:nth-child(odd) * {
+            background: #C8E6C9;
+        }
+        table td, th {
+            padding: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <h1>Android HTTP Server</h1>
+        <p>by <a href="https://www.github.com/chooyan-eng">@chooyan-eng</a></p>
+    </div>
+    <div id="contents">
+        <h2>Hello {{client}}!</h2>
+        <p class="margintop">This is a demo page of Android HTTP server.</p>
+        <p>This page is the response from Android device. Information about the device is listed below.</p>
+        <table class="margintop">
+            <tr>
+                <th>Host Device Brand</th>
+                <td>{{brand}}</td>
+            </tr>
+            <tr>
+                <th>Host Device Name</th>
+                <td>{{device}}</td>
+            </tr>
+            <tr>
+                <th>Location</th>
+                <td>{{location}}</td>
+            </tr>
+        </table>
+        <p class="margintop">Message from Server</p>
+        <p class="message">{{message}}</p>
+    </div>
+
+</body>
+</html>
