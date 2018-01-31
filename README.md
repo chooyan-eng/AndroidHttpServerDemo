@@ -30,7 +30,7 @@ $ git clone https://github.com/chooyan-eng/AndroidHttpServerDemo
 
 Then, you will get the page like this.
 
-![Image of index.html](https://github.com/chooyan-eng/code-your-ruby/blob/image/image/image_local_basic.png)
+![Image of index.html](https://raw.githubusercontent.com/chooyan-eng/AndroidHttpServerDemo/image/images/screenshot_top.png)
 
 # Contributing
 
