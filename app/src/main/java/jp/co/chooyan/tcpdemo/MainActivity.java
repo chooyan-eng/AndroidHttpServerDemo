@@ -2,6 +2,7 @@ package jp.co.chooyan.tcpdemo;
 
 import android.content.res.AssetManager;
 import android.os.Build;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -46,7 +47,7 @@ public class MainActivity extends AppCompatActivity {
                 parser.add(data);
                 final HttpRequest request = parser.parse();
                 if (request != null) {
-                    outputHtml(request);
+                    output(request);
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -65,26 +66,49 @@ public class MainActivity extends AppCompatActivity {
         server.start();
     }
 
-    private static final int BUFFER_SIZE = 1024 * 1024 * 1;
-    private static final byte LF = 0x0a;
-    private static final byte CR = 0x0d;
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        server.stop();
+        server = null;
+    }
 
-    private void outputHtml(HttpRequest request) {
+    private void output(HttpRequest request) {
         if (server == null) {
             return;
         }
 
-        String indexHtml = loadHtml();
-        String responseBody = indexHtml.replace("{{client}}", request.getHeaders().get("User-Agent"))
-                                       .replace("{{brand}}", Build.BRAND)
-                                       .replace("{{device}}", Build.DEVICE)
-//                                       .replace("{{location}}", "")
-                                       .replace("{{message}}", userInput.getText().toString());
+        if (request.getRequestTarget().equals("/") || request.getRequestTarget().equals("/index.html")) {
+            outputHtml(buildIndexHtml(request), "200 OK");
+        } else if (request.getRequestTarget().equals("/favicon.ico")) {
+            outputPng(loadBinary("favicon.png"), "200 OK");
+        } else {
+            outputHtml(build404Html(request), "404 Not Found");
+        }
+    }
 
-        String startLine = "HTTP/1.1 200 OK";
+    private String buildIndexHtml(HttpRequest request) {
+        return loadHtml("index.html").replace("{{client}}", request.getHeaders().get("User-Agent"))
+                         .replace("{{brand}}", Build.BRAND)
+                         .replace("{{device}}", Build.DEVICE)
+                         .replace("{{location}}", "35.656559, 139.6929806") // TODO: use GPS if I have time...
+                         .replace("{{message}}", userInput.getText().toString());
+    }
+
+    private String build404Html(HttpRequest request) {
+        return loadHtml("404.html");
+    }
+
+    private static final int BUFFER_SIZE = 1024 * 1024 * 1;
+    private static final byte LF = 0x0a;
+    private static final byte CR = 0x0d;
+
+    private void outputHtml(String html, String responseCode) {
+
+        String startLine = "HTTP/1.1 " + responseCode;
         List<String> responseHeaders = new ArrayList<>();
         responseHeaders.add("Content-Type: text/html; charset=UTF-8");
-        responseHeaders.add(String.format("Content-Length: %d", responseBody.getBytes().length));
+        responseHeaders.add(String.format("Content-Length: %d", html.getBytes().length));
 
         StringBuilder builder = new StringBuilder();
         builder.append(startLine).append(new String(new byte[]{CR, LF}));
@@ -92,16 +116,47 @@ public class MainActivity extends AppCompatActivity {
             builder.append(responseHeader).append(new String(new byte[]{CR, LF}));
         }
         builder.append(new String(new byte[]{CR, LF}));
-        builder.append(responseBody);
+        builder.append(html);
 
         server.output(builder.toString());
     }
 
-    private String loadHtml() {
+    private void outputPng(byte[] png, String responseCode) {
+
+        String startLine = "HTTP/1.1 " + responseCode;
+        List<String> responseHeaders = new ArrayList<>();
+        responseHeaders.add("Content-Type: image/png");
+        responseHeaders.add(String.format("Content-Length: %d", png.length));
+
+        StringBuilder builder = new StringBuilder();
+        builder.append(startLine).append(new String(new byte[]{CR, LF}));
+        for (String responseHeader : responseHeaders) {
+            builder.append(responseHeader).append(new String(new byte[]{CR, LF}));
+        }
+        builder.append(new String(new byte[]{CR, LF}));
+        byte[] headerField = builder.toString().getBytes();
+
+        byte[] output = new byte[headerField.length + png.length];
+        System.arraycopy(headerField, 0, output, 0, headerField.length);
+        System.arraycopy(png, 0, output, headerField.length, png.length);
+        server.output(output);
+    }
+
+    @Nullable
+    private String loadHtml(String fileName) {
+        byte[] binary = loadBinary(fileName);
+        if (binary == null) {
+            return null;
+        }
+        return new String(binary);
+    }
+
+    @Nullable
+    private byte[] loadBinary(String fileName) {
         AssetManager assetManager = getAssets();
 
         try {
-            InputStream is = assetManager.open("index.html");
+            InputStream is = assetManager.open(fileName);
             ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
             byte[] chunk = new byte[BUFFER_SIZE];
             BufferedInputStream bis = new BufferedInputStream(is, BUFFER_SIZE);
@@ -111,7 +166,7 @@ public class MainActivity extends AppCompatActivity {
                 while ((len = bis.read(chunk, 0, BUFFER_SIZE)) > 0) {
                     byteStream.write(chunk, 0, len);
                 }
-                return new String(byteStream.toByteArray());
+                return byteStream.toByteArray();
 
             } finally {
                 try {
@@ -127,10 +182,4 @@ public class MainActivity extends AppCompatActivity {
         return null;
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        server.stop();
-        server = null;
-    }
 }
