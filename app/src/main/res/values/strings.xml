@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">ChooyanTcpDemo</string>
+    <string name="http_service_name">ChooyanHttpService</string>
+    <string name="http_service_text">I am running the HTTP service on my Android device.</string>
+    <string name="http_service_channel_id">HTTP Service channel</string>
 </resources>
